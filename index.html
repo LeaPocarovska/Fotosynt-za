@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <title>Bitva o světlo – zábavnější singleplayer</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #f0f7f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background: #2f855a;
+            color: white;
+            padding: 1rem 2rem;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+        }
+
+        main {
+            max-width: 900px;
+            margin: 1.5rem auto;
+            padding: 0 1rem 2rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            padding: 1rem 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .card h2 {
+            margin-top: 0;
+            font-size: 1.3rem;
+        }
+
+        .setup-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        label {
+            font-weight: 600;
+            margin-right: 0.25rem;
+        }
+
+        input[type="number"],
+        input[type="text"] {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            border: 1px solid #cbd5e0;
+        }
+
+        button {
+            padding: 0.4rem 0.9rem;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            background: #2b6cb0;
+            color: white;
+            transition: transform 0.05s ease, box-shadow 0.05s ease, background 0.2s ease;
+        }
+
+        button:hover {
+            background: #2c5282;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .actions button {
+            margin: 0.25rem 0.25rem 0.25rem 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 0.5rem;
+        }
+
+        th, td {
+            border-bottom: 1px solid #e2e8f0;
+            padding: 0.35rem 0.4rem;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background: #edf2f7;
+        }
+
+        #log {
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 0.9rem;
+            padding-left: 1.1rem;
+        }
+
+        #log li {
+            margin-bottom: 0.15rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.15rem 0.5rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: #edf2f7;
+            color: #2d3748;
+            margin-left: 0.5rem;
+        }
+
+        .info-text {
+            font-size: 0.9rem;
+            color: #4a5568;
+        }
+
+        .winner {
+            font-weight: 700;
+            color: #2f855a;
+        }
+
+        .flex-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .flex-col {
+            flex: 1 1 260px;
+        }
+
+        .event-box {
+            margin: 0.7rem 0 0.8rem;
+            padding: 0.6rem 0.8rem;
+            border-radius: 8px;
+            border: 1px dashed #cbd5e0;
+            background: #f7fafc;
+        }
+
+        .event-name {
+            font-weight: 700;
+            margin: 0 0 0.2rem;
+        }
+
+        .event-positive {
+            border-color: #9ae6b4;
+            background: #f0fff4;
+        }
+
+        .event-negative {
+            border-color: #feb2b2;
+            background: #fff5f5;
+        }
+
+        .event-neutral {
+            border-color: #cbd5e0;
+            background: #f7fafc;
+        }
+
+        #plantEmoji {
+            font-size: 2.4rem;
+            display: inline-block;
+            margin-top: 0.2rem;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Bitva o světlo – singleplayer hra o fotosyntéze</h1>
+</header>
+<main>
+    <!-- Nastavení hry -->
+    <section class="card">
+        <h2>Nastavení hry</h2>
+        <div class="setup-row">
+            <div>
+                <label for="playerName">Jméno hráče:</label>
+                <input type="text" id="playerName" placeholder="např. Anna" />
+            </div>
+            <div>
+                <label for="maxRounds">Počet kol:</label>
+                <input type="number" id="maxRounds" min="3" max="20" value="10">
+            </div>
+            <button id="startGameBtn">Spustit hru</button>
+        </div>
+        <p class="info-text">
+            Hraješ za <strong>jednu rostlinu</strong>. Na začátku každého kola získáš:
+            <br>• světlo = počet listů 🌿
+            <br>• voda = počet kořenů 🌱
+            <br>• CO₂ = 1 🌫️
+            <br>Navíc se v každém kole stane <strong>náhodná událost prostředí</strong> (slunce, déšť, sucho...),
+            která může pomoci nebo uškodit. V každém kole smíš provést <strong>jednu akci</strong>.
+            Na konci hry se sečte tvoje glukóza 🍬. Vyhrává ten z celé skupiny, kdo má nejvíce glukózy.
+        </p>
+    </section>
+
+    <!-- Hra -->
+    <section class="card" id="gameSection" style="display:none;">
+        <div class="flex-row">
+            <div class="flex-col">
+                <h2>Tvůj tah</h2>
+                <p class="info-text">
+                    <strong>Hráč:</strong> <span id="playerNameDisplay"></span>
+                    <span class="badge">Kolo: <span id="roundDisplay">1</span></span>
+                </p>
+
+                <div id="eventBox" class="event-box event-neutral">
+                    <p id="eventName" class="event-name">Událost tohoto kola</p>
+                    <p id="eventDescription" class="event-desc info-text">
+                        Zatím žádná událost – klikni na „Spustit hru“.
+                    </p>
+                </div>
+
+                <p class="info-text">
+                    Na začátku <strong>každého kola</strong> automaticky získáš zdroje podle své rostliny
+                    a podle aktuální události prostředí. Potom si vyber <strong>jednu akci</strong>:
+                </p>
+
+                <h3>Akce v tomto kole</h3>
+                <div class="actions">
+                    <button class="action-btn" data-action="photosynthesis">Fotosyntéza</button>
+                    <button class="action-btn" data-action="growLeaf">Růst listu</button>
+                    <button class="action-btn" data-action="growRoot">Růst kořene</button>
+                </div>
+
+                <p class="info-text" style="margin-top:0.5rem;">
+                    <strong>Náklady / efekty:</strong><br>
+                    • Fotosyntéza: −1 světlo, −1 voda, −1 CO₂ → +1 glukóza
+                      <br>&nbsp;&nbsp;(+ malá šance na „kritickou“ fotosyntézu = +2 glukózy)<br>
+                    • Růst listu: −1 glukóza → +1 list (více světla do budoucna)<br>
+                    • Růst kořene: −1 glukóza → +1 kořen (více vody do budoucna)
+                </p>
+
+                <button id="nextRoundBtn" style="margin-top:0.8rem;">Další kolo</button>
+                <p class="info-text" style="margin-top:0.3rem;">
+                    Nejdřív si vyber akci, potom klikni na „Další kolo“.
+                </p>
+            </div>
+
+            <div class="flex-col">
+                <h2>Stav rostliny</h2>
+                <p class="info-text">
+                    Tvoje rostlina: <span id="plantEmoji">🌱</span>
+                </p>
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Listy 🌿</th>
+                        <th>Kořeny 🌱</th>
+                        <th>Světlo ☀️</th>
+                        <th>Voda 💧</th>
+                        <th>CO₂ 🌫️</th>
+                        <th>Glukóza 🍬</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td id="statLeaves">0</td>
+                        <td id="statRoots">0</td>
+                        <td id="statLight">0</td>
+                        <td id="statWater">0</td>
+                        <td id="statCo2">0</td>
+                        <td id="statGlucose">0</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- Log -->
+    <section class="card" id="logSection" style="display:none;">
+        <h2>Průběh hry</h2>
+        <ul id="log"></ul>
+    </section>
+
+    <!-- Výsledek -->
+    <section class="card" id="winnerSection" style="display:none;">
+        <h2>Výsledek hry</h2>
+        <p id="winnerText"></p>
+        <p class="info-text">
+            Zapiš si své jméno a počet glukózy 🍬. Porovnáním výsledků všech účastníků zjistíte vítěze.
+        </p>
+    </section>
+</main>
+
+<script>
+"use strict";
+
+// --- Herní stav ---
+let player = null;
+let round = 1;
+let maxRounds = 10;
+let gameStarted = false;
+let hasActedThisRound = false;
+let currentEvent = null;
+
+// --- Definice náhodných událostí prostředí ---
+const EVENTS = [
+    {
+        id: "sunny",
+        name: "Slunečný den ☀️",
+        description: "Extra slunce! Získáš +1 světla navíc.",
+        mood: "positive",
+        applyGains(gains, player) {
+            gains.light += 1;
+        }
+    },
+    {
+        id: "cloudy",
+        name: "Zataženo ☁️",
+        description: "Málo slunce. Získáš o 1 světla méně (ale ne méně než 0).",
+        mood: "negative",
+        applyGains(gains, player) {
+            gains.light -= 1;
+        }
+    },
+    {
+        id: "rain",
+        name: "Vydatný déšť 🌧️",
+        description: "Kořeny se naplnily vodou – získáš +1 vody navíc.",
+        mood: "positive",
+        applyGains(gains, player) {
+            gains.water += 1;
+        }
+    },
+    {
+        id: "drought",
+        name: "Sucho 🔥",
+        description: "Sucho omezuje vodu. Pokud máš méně než 3 kořeny, přijdeš o 1 vodu zisku.",
+        mood: "negative",
+        applyGains(gains, player) {
+            if (player.roots < 3) {
+                gains.water -= 1;
+            }
+        }
+    },
+    {
+        id: "cleanAir",
+        name: "Čistý vzduch 🌍",
+        description: "Mnoho CO₂ v atmosféře – získáš +1 CO₂ navíc.",
+        mood: "positive",
+        applyGains(gains, player) {
+            gains.co2 += 1;
+        }
+    },
+    {
+        id: "pollution",
+        name: "Znečištění vzduchu 🏭",
+        description: "Znečištění snižuje účinný CO₂ – získáš o 1 CO₂ méně.",
+        mood: "negative",
+        applyGains(gains, player) {
+            gains.co2 -= 1;
+        }
+    },
+    {
+        id: "herbivores",
+        name: "Žravý hmyz 🐛",
+        description: "Hmyz ti ožral listy – pokud nějaké máš, přijdeš o 1 list.",
+        mood: "negative",
+        applyGains(gains, player) {
+            if (player.leaves > 0) {
+                player.leaves -= 1;
+            }
+        }
+    },
+    {
+        id: "pollinators",
+        name: "Pilní opylovači 🐝",
+        description: "Ekosystém ti přeje – zdarma získáš +1 glukózu.",
+        mood: "positive",
+        applyGains(gains, player) {
+            player.glucose += 1;
+        }
+    }
+];
+
+// --- Pomocné funkce DOM ---
+function $(selector) {
+    return document.querySelector(selector);
+}
+
+function logMessage(text) {
+    const logList = $("#log");
+    const li = document.createElement("li");
+    const timestamp = new Date().toLocaleTimeString("cs-CZ", { hour12: false });
+    li.textContent = "[" + timestamp + "] " + text;
+    logList.appendChild(li);
+    logList.scrollTop = logList.scrollHeight;
+}
+
+// --- Rostlinný „avatar“ podle úspěšnosti ---
+function getPlantEmoji(player) {
+    const score = player.leaves + player.roots + player.glucose;
+    if (score < 4) return "🌱";
+    if (score < 8) return "🌿";
+    return "🌳";
+}
+
+// --- Náhodná událost pro kolo ---
+function pickRandomEvent() {
+    const index = Math.floor(Math.random() * EVENTS.length);
+    return EVENTS[index];
+}
+
+function updateEventUI() {
+    const box = $("#eventBox");
+    const nameEl = $("#eventName");
+    const descEl = $("#eventDescription");
+
+    box.classList.remove("event-positive", "event-negative", "event-neutral");
+
+    if (!currentEvent) {
+        nameEl.textContent = "Žádná událost";
+        descEl.textContent = "Zatím se nic neděje.";
+        box.classList.add("event-neutral");
+        return;
+    }
+
+    nameEl.textContent = currentEvent.name;
+    descEl.textContent = currentEvent.description;
+
+    if (currentEvent.mood === "positive") {
+        box.classList.add("event-positive");
+    } else if (currentEvent.mood === "negative") {
+        box.classList.add("event-negative");
+    } else {
+        box.classList.add("event-neutral");
+    }
+}
+
+// --- Zahájení hry ---
+function startGame() {
+    const nameInput = $("#playerName");
+    const roundsInput = $("#maxRounds");
+    const name = nameInput.value.trim() || "Neznámý hráč";
+    const roundsValue = parseInt(roundsInput.value, 10);
+
+    if (isNaN(roundsValue) || roundsValue < 3 || roundsValue > 20) {
+        alert("Zadej počet kol mezi 3 a 20.");
+        return;
+    }
+
+    maxRounds = roundsValue;
+    round = 1;
+    hasActedThisRound = false;
+
+    player = {
+        name: name,
+        leaves: 1,   // začíná s 1 listem
+        roots: 1,    // a 1 kořenem
+        light: 0,
+        water: 0,
+        co2: 0,
+        glucose: 0
+    };
+
+    gameStarted = true;
+
+    $("#playerNameDisplay").textContent = player.name;
+    $("#roundDisplay").textContent = String(round);
+
+    $("#gameSection").style.display = "block";
+    $("#logSection").style.display = "block";
+    $("#winnerSection").style.display = "none";
+    $("#log").innerHTML = "";
+
+    $("#startGameBtn").disabled = true;
+
+    logMessage("Hra spuštěna pro hráče " + player.name + " na " + maxRounds + " kol.");
+    giveStartOfRoundResources();
+    render();
+}
+
+// --- Zdroje na začátku kola + událost ---
+function giveStartOfRoundResources() {
+    // vyber náhodnou událost
+    currentEvent = pickRandomEvent();
+    logMessage("Událost kola: " + currentEvent.name.replace(/[\u{1F300}-\u{1FAFF}]/gu, "").trim() + ".");
+
+    // základní zisky podle listů/kořenů
+    let gains = {
+        light: player.leaves,
+        water: player.roots,
+        co2: 1
+    };
+
+    // aplikuj vliv události
+    currentEvent.applyGains(gains, player);
+
+    // hodnoty nemůžou být záporné
+    gains.light = Math.max(0, gains.light);
+    gains.water = Math.max(0, gains.water);
+    gains.co2 = Math.max(0, gains.co2);
+
+    player.light += gains.light;
+    player.water += gains.water;
+    player.co2 += gains.co2;
+
+    logMessage(
+        "Kolo " + round + ": " + player.name +
+        " získává " + gains.light + " světla, " +
+        gains.water + " vody a " +
+        gains.co2 + " CO₂ (po vlivu události)."
+    );
+
+    updateEventUI();
+}
+
+// --- Vykreslení stavu ---
+function render() {
+    $("#statLeaves").textContent = String(player.leaves);
+    $("#statRoots").textContent = String(player.roots);
+    $("#statLight").textContent = String(player.light);
+    $("#statWater").textContent = String(player.water);
+    $("#statCo2").textContent = String(player.co2);
+    $("#statGlucose").textContent = String(player.glucose);
+
+    $("#roundDisplay").textContent = String(round);
+    $("#plantEmoji").textContent = getPlantEmoji(player);
+
+    // Ovládání tlačítek
+    const actionButtons = document.querySelectorAll(".action-btn");
+    actionButtons.forEach(btn => {
+        btn.disabled = !gameStarted || hasActedThisRound;
+    });
+
+    $("#nextRoundBtn").disabled = !gameStarted || !hasActedThisRound;
+}
+
+// --- Akce hráče ---
+function performAction(action) {
+    if (!gameStarted) return;
+    if (hasActedThisRound) {
+        alert("V tomto kole už jsi akci provedl/a. Pokračuj na „Další kolo“.");
+        return;
+    }
+
+    switch (action) {
+        case "photosynthesis":
+            if (player.light >= 1 && player.water >= 1 && player.co2 >= 1) {
+                player.light -= 1;
+                player.water -= 1;
+                player.co2 -= 1;
+                player.glucose += 1;
+
+                // šance na „kritickou“ fotosyntézu – extra glukóza
+                const critChance = 0.18; // 18 %
+                if (Math.random() < critChance) {
+                    player.glucose += 1;
+                    logMessage(player.name + " provádí KRITICKOU fotosyntézu a získává 2 glukózy!");
+                } else {
+                    logMessage(player.name + " provádí fotosyntézu a získává 1 glukózu.");
+                }
+            } else {
+                alert("Nedostatek zdrojů na fotosyntézu (potřebuješ 1 světlo, 1 vodu a 1 CO₂).");
+                return;
+            }
+            break;
+
+        case "growLeaf":
+            if (player.glucose >= 1) {
+                player.glucose -= 1;
+                player.leaves += 1;
+                logMessage(player.name + " investuje 1 glukózu do růstu listu (+1 list).");
+            } else {
+                alert("Nedostatek glukózy na růst listu (potřebuješ 1).");
+                return;
+            }
+            break;
+
+        case "growRoot":
+            if (player.glucose >= 1) {
+                player.glucose -= 1;
+                player.roots += 1;
+                logMessage(player.name + " investuje 1 glukózu do růstu kořene (+1 kořen).");
+            } else {
+                alert("Nedostatek glukózy na růst kořene (potřebuješ 1).");
+                return;
+            }
+            break;
+
+        default:
+            console.warn("Neznámá akce:", action);
+            return;
+    }
+
+    hasActedThisRound = true;
+    render();
+}
+
+// --- Další kolo ---
+function nextRound() {
+    if (!gameStarted) return;
+    if (!hasActedThisRound) {
+        alert("Nejdříve v tomto kole proveď jednu akci.");
+        return;
+    }
+
+    round++;
+
+    if (round > maxRounds) {
+        endGame();
+        return;
+    }
+
+    hasActedThisRound = false;
+    giveStartOfRoundResources();
+    render();
+}
+
+// --- Konec hry ---
+function endGame() {
+    gameStarted = false;
+
+    $("#startGameBtn").disabled = false;
+    $("#winnerSection").style.display = "block";
+
+    const text = player.name + " končí hru s " + player.glucose + " glukózami.";
+    $("#winnerText").innerHTML = '<span class="winner">' + text + '</span>';
+    logMessage("Hra končí. " + text);
+
+    // Zakázat další akce
+    const actionButtons = document.querySelectorAll(".action-btn");
+    actionButtons.forEach(btn => btn.disabled = true);
+    $("#nextRoundBtn").disabled = true;
+}
+
+// --- Event listenery ---
+document.addEventListener("DOMContentLoaded", () => {
+    $("#startGameBtn").addEventListener("click", startGame);
+
+    const actionButtons = document.querySelectorAll(".action-btn");
+    actionButtons.forEach(btn => {
+        btn.addEventListener("click", (event) => {
+            const action = event.currentTarget.getAttribute("data-action");
+            performAction(action);
+        });
+    });
+
+    $("#nextRoundBtn").addEventListener("click", nextRound);
+});
+</script>
+</body>
+</html>
