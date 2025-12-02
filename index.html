@@ -452,7 +452,7 @@ function startGame() {
     const nameInput = $("#playerName");
     const roundsInput = $("#maxRounds");
     const name = nameInput.value.trim() || "Neznámý hráč";
-    const roundsValue = parseInt(roundsInput.value, 10);
+    const roundsValue = parseInt(roundsInput.value, 20);
 
     if (isNaN(roundsValue) || roundsValue < 3 || roundsValue > 20) {
         alert("Zadej počet kol mezi 3 a 20.");
@@ -465,12 +465,12 @@ function startGame() {
 
     player = {
         name: name,
-        leaves: 1,   // začíná s 1 listem
-        roots: 1,    // a 1 kořenem
-        light: 0,
-        water: 0,
-        co2: 0,
-        glucose: 0
+        leaves: 1,
+        roots: 1,
+        light: 1,
+        water: 1,
+        co2: 1,
+        glucose: 1
     };
 
     gameStarted = true;
