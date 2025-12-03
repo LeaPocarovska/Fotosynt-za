@@ -184,7 +184,7 @@
 </head>
 <body>
 <header>
-    <h1>Bitva o světlo – singleplayer hra o fotosyntéze</h1>
+    <h1>Lovec fotonů – interaktivní simulace</h1>
 </header>
 <main>
     <!-- Nastavení hry -->
@@ -197,7 +197,7 @@
             </div>
             <div>
                 <label for="maxRounds">Počet kol:</label>
-                <input type="number" id="maxRounds" min="3" max="20" value="10">
+                <input type="number" id="maxRounds" min="3" max="30" value="10">
             </div>
             <button id="startGameBtn">Spustit hru</button>
         </div>
@@ -208,7 +208,7 @@
             <br>• CO₂ = 1 🌫️
             <br>Navíc se v každém kole stane <strong>náhodná událost prostředí</strong> (slunce, déšť, sucho...),
             která může pomoci nebo uškodit. V každém kole smíš provést <strong>jednu akci</strong>.
-            Na konci hry se sečte tvoje glukóza 🍬. Vyhrává ten z celé skupiny, kdo má nejvíce glukózy.
+            Na konci hry se sečte tvoje glukóza, listy a kořeny. Vyhrává ten z celé skupiny, kdo má největší skóre.
         </p>
     </section>
 
@@ -225,7 +225,7 @@
                 <div id="eventBox" class="event-box event-neutral">
                     <p id="eventName" class="event-name">Událost tohoto kola</p>
                     <p id="eventDescription" class="event-desc info-text">
-                        Zatím žádná událost – klikni na „Spustit hru“.
+                        Zatím žádná událost.
                     </p>
                 </div>
 
@@ -452,9 +452,9 @@ function startGame() {
     const nameInput = $("#playerName");
     const roundsInput = $("#maxRounds");
     const name = nameInput.value.trim() || "Neznámý hráč";
-    const roundsValue = parseInt(roundsInput.value, 20);
+    const roundsValue = parseInt(roundsInput.value, 10);
 
-    if (isNaN(roundsValue) || roundsValue < 3 || roundsValue > 20) {
+    if (isNaN(roundsValue) || roundsValue < 3 || roundsValue > 30) {
         alert("Zadej počet kol mezi 3 a 20.");
         return;
     }
@@ -490,12 +490,16 @@ function startGame() {
     render();
 }
 
-// --- Zdroje na začátku kola + událost ---
 function giveStartOfRoundResources() {
-    // vyber náhodnou událost
-    currentEvent = pickRandomEvent();
-    logMessage("Událost kola: " + currentEvent.name.replace(/[\u{1F300}-\u{1FAFF}]/gu, "").trim() + ".");
-
+    // v 1. kole žádná náhodná událost
+    if (round === 1) {
+        currentEvent = null;
+        logMessage("První kolo: žádná náhodná událost.");
+    } else {
+        // od 2. kola dál vybíráme normální random event
+        currentEvent = pickRandomEvent();
+        logMessage("Událost kola: " + currentEvent.name.replace(/[\u{1F300}-\u{1FAFF}]/gu, "").trim() + ".");
+    }
     // základní zisky podle listů/kořenů
     let gains = {
         light: player.leaves,
@@ -634,7 +638,15 @@ function endGame() {
     $("#startGameBtn").disabled = false;
     $("#winnerSection").style.display = "block";
 
-    const text = player.name + " končí hru s " + player.glucose + " glukózami.";
+    // Výsledek = listy + kořeny + glukóza
+    const score = player.leaves + player.roots + player.glucose;
+
+    const text = player.name +
+        " končí hru se skóre " + score +
+        " (listy: " + player.leaves +
+        ", kořeny: " + player.roots +
+        ", glukóza: " + player.glucose + ").";
+
     $("#winnerText").innerHTML = '<span class="winner">' + text + '</span>';
     logMessage("Hra končí. " + text);
 
@@ -643,6 +655,7 @@ function endGame() {
     actionButtons.forEach(btn => btn.disabled = true);
     $("#nextRoundBtn").disabled = true;
 }
+
 
 // --- Event listenery ---
 document.addEventListener("DOMContentLoaded", () => {
