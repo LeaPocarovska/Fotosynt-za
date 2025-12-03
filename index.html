@@ -489,27 +489,22 @@ function startGame() {
     render();
 }
 
-function giveStartOfRoundResources() {
-    // v 1. kole žádná náhodná událost
-    if (round === 1) {
-        currentEvent = null;
-        logMessage("První kolo: žádná náhodná událost.");
-    } else {
-        // od 2. kola dál vybíráme normální random event
-        currentEvent = pickRandomEvent();
-        logMessage("Událost kola: " + currentEvent.name.replace(/[\u{1F300}-\u{1FAFF}]/gu, "").trim() + ".");
-    }
-    // základní zisky podle listů/kořenů
+ function giveStartOfRoundResources() {
     let gains = {
         light: player.leaves,
         water: player.roots,
         co2: 1
     };
 
-    // aplikuj vliv události
-    currentEvent.applyGains(gains, player);
+    if (round === 1) {
+        currentEvent = null;
+        logMessage("První kolo: žádná náhodná událost.");
+    } else {
+        currentEvent = pickRandomEvent();
+        logMessage("Událost kola: " + currentEvent.name + ".");
+        currentEvent.applyGains(gains, player);
+    }
 
-    // hodnoty nemůžou být záporné
     gains.light = Math.max(0, gains.light);
     gains.water = Math.max(0, gains.water);
     gains.co2 = Math.max(0, gains.co2);
@@ -522,11 +517,13 @@ function giveStartOfRoundResources() {
         "Kolo " + round + ": " + player.name +
         " získává " + gains.light + " světla, " +
         gains.water + " vody a " +
-        gains.co2 + " CO₂ (po vlivu události)."
+        gains.co2 + " CO₂" +
+        (round === 1 ? " (bez speciální události)." : " (po vlivu události).")
     );
 
     updateEventUI();
 }
+
 
 // --- Vykreslení stavu ---
 function render() {
